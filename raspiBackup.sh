@@ -3824,7 +3824,7 @@ function sendEMail() { # content subject
 			fi
 		fi
 
-		subject="$smiley$subject"
+		subject="=?UTF-8?Q?${smiley}Alles gemütlich${subject}?="
 
 		if [[ "$COLORING" =~ $COLORING_MAIL ]]; then
 			if [[ ! $EMAIL_COLORING =~ $SUPPORTED_EMAIL_COLORING_REGEX ]]; then
