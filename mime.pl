@@ -2,10 +2,6 @@
 
 use Encode qw(encode decode);
 
-while (<>) {
-	my $inp=$_;
-	chomp $inp;
-	printf("-%s-\n",$inp);
-	my $mime_str = encode("MIME-Header", $inp);
-	print("%s - %s\n", $inp, $mime_str);
-}
+local $Encode::MIME::Header::STRICT_DECODE = 1;
+my $mime_str = encode("MIME-Q", $_);
+print($mime_str);
