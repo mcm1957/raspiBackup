@@ -41,7 +41,7 @@ fi
 MYSELF=${0##*/}
 MYNAME=${MYSELF%.*}
 
-VERSION="0.6.6.1"										# -beta, -hotfix or -dev suffixes possible
+VERSION="0.6.6.1-hotfix-GUM"										# -beta, -hotfix or -dev suffixes possible
 VERSION_SCRIPT_CONFIG="0.1.4"									# required config version for script
 
 VERSION_VARNAME="VERSION"										# has to match above var names
@@ -4519,10 +4519,14 @@ function bootPartitionBackup() {
 					cmd="cd /boot; tar $TAR_BACKUP_OPTIONS -f \"$BACKUPTARGET_DIR/$BACKUPFILES_PARTITION_DATE.$ext\" ."
 				else
 					cmd="dd if=/dev/${BOOT_PARTITION_PREFIX}1 of=\"$BACKUPTARGET_DIR/$BACKUPFILES_PARTITION_DATE.$ext\" bs=1M"
+					executeCommand "$cmd"
+					rc=$?
+					losetup --partscan --find --show "$BACKUPTARGET_DIR/$BACKUPFILES_PARTITION_DATE.$ext"
+					mount /dev/loop0 /mnt
+					logCommand "ls -lRt /mnt"
+					losetup -d /dev/loop0
 				fi
 
-				executeCommand "$cmd"
-				rc=$?
 				if [ $rc != 0 ]; then
 					writeToConsole $MSG_LEVEL_MINIMAL $MSG_IMG_BOOT_BACKUP_FAILED "$BACKUPTARGET_DIR/$BACKUPFILES_PARTITION_DATE.$ext" "$rc"
 					exitError $RC_DD_IMG_FAILED
@@ -5203,10 +5207,19 @@ function restore() {
 				if (( $PROGRESS )); then
 					dd if="$DD_FILE" 2>> $LOG_FILE | pv -fs $(stat -c %s "$DD_FILE") | dd of=$BOOT_PARTITION bs=1M &>>"$LOG_FILE"
 				else
+					losetup --partscan --find --show "$DD_FILE"
+					mount /dev/loop0 /mnt
+					logCommand "ls -lRt /mnt"
+					losetup -d /dev/loop0
+
+					set -x
 					dd if="$DD_FILE" of=$BOOT_PARTITION bs=1M &>>"$LOG_FILE"
+					rc=$?
+					set +x
+					
+					logCommand "ls -lRt /boot" 
 				fi
-				rc=$?
-			else
+		else
 				ext=$BOOT_TAR_EXT
 				logItem "Restoring boot partition from $TAR_FILE to $BOOT_PARTITION"
 				mountAndCheck $BOOT_PARTITION "$MNT_POINT"
